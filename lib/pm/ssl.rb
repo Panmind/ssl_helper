@@ -30,13 +30,13 @@ module PM
           ActionController::Integration::Session, ActionController::TestCase,
         ]
 
-        # Ask ActionController for all the named_routes helper names
-        # TODO: This is a private API, so it may change. Please take
-        # care with Rails upgrades. Maybe a heavier (but safer) call
-        # such as controller.methods.grep/(_path|url)$/ would do the
-        # job better.
+        # There's a private API in ActionController, but it's unsafe
+        # to use it because it could change in future Rails versions
         #
-        route_helpers = ActionController::Routing::Routes.named_routes.helpers
+        # ActionController::Routing::Routes.named_routes.helpers
+        #
+        route_helpers = controller.instance_methods.grep(/_url$/) -
+          controller.instance_methods.grep(/^(hash_for_|formatted)/)
 
         # Create a Module containing all the ssl_ and plain_ helpers
         # that: [1] alter the args they receive with the SSL options
@@ -49,6 +49,8 @@ module PM
 
               define_method(ssl)   { |*args| send(helper, *ssl_alter(args, WITH_SSL))    }
               define_method(plain) { |*args| send(helper, *ssl_alter(args, WITHOUT_SSL)) }
+
+              protected ssl, plain
             end
 
             private
@@ -65,12 +67,12 @@ module PM
         #
         classes_to_patch.each {|k| k.module_eval { include helper_module } }
 
-        # Into the ApplicationHelper the named route helpers are all
-        # protected: set the ssl_ and plain_ counterparts protected
-        # as well.
-        ApplicationHelper.module_eval do
-          protected *route_helpers.map {|h| "ssl_#{h}".to_sym }
-          protected *route_helpers.map {|h| "plain_#{h}".to_sym }
+        # Set the helpers as public in the AC::Integration::Session class
+        # for easy testing in the console.
+        #
+        ActionController::Integration::Session.module_eval do
+          public *route_helpers.map {|helper| "ssl_#{helper}" }
+          public *route_helpers.map {|helper| "plain_#{helper}" }
         end
       end
 
