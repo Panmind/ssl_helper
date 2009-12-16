@@ -4,8 +4,16 @@ module PM
     WITHOUT_SSL = {:protocol => 'http'}
 
     unless Rails.env.test? # Because tests make assumptions we cannot break
-      WITH_SSL.update(:port => APPLICATION_CONFIG[:https_port] || 443)
-      WITHOUT_SSL.update(:port => APPLICATION_CONFIG[:http_port]  || 80)
+      https_port = APPLICATION_CONFIG[:https_port].to_i
+      http_port  = APPLICATION_CONFIG[:http_port].to_i
+      https_port = 443 if https_port.zero?
+      http_port  = 80  if http_port.zero?
+
+      # if we use non-standard ports we must explictly use them in the URIs
+      if https_port != 443 || http_port != 80
+        WITH_SSL.update(:port => https_port)
+        WITHOUT_SSL.update(:port => http_port)
+      end
     end
 
     [WITH_SSL, WITHOUT_SSL].each(&:freeze) # Better safe than sorry
