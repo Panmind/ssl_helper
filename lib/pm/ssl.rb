@@ -1,5 +1,12 @@
+# This module gets populated at runtime with all the route helpers.
+# It is here, outside the PM module, because it musn't be unloaded
+# or huge memory leaks (~3MB/reload) will occur.
+#
+module SSLRouteHelpers; end
+
 module PM
   module SSL
+
     WITH_SSL    = {:protocol => 'https'}
     WITHOUT_SSL = {:protocol => 'http'}
 
@@ -26,54 +33,79 @@ module PM
           raise ArgumentError, "The PM::SSL::REST module can be included ONLY into an ActionController::Base child!"
         end
 
-        classes_to_patch = [controller, ApplicationHelper,
-          ActionController::Integration::Session, ActionController::TestCase,
+        classes_to_patch = [controller,
+          ApplicationHelper,
+          ActionController::Integration::Session,
+          ActionController::TestCase
         ]
 
-        # There's a private API in ActionController, but it's unsafe
-        # to use it because it could change in future Rails versions
-        #
-        # ActionController::Routing::Routes.named_routes.helpers
-        #
-        route_helpers = controller.instance_methods.grep(/_url$/) -
-          controller.instance_methods.grep(/^(hash_for_|formatted)/)
-
-        # Create a Module containing all the ssl_ and plain_ helpers
-        # that: [1] alter the args they receive with the SSL options
-        # and [2] forward the altered args to the Rails' helper.
-        #
-        helper_module = returning(Module.new) do |mod|
-          mod.module_eval do
-            route_helpers.each do |helper|
-              ssl, plain = "ssl_#{helper}".to_sym, "plain_#{helper}".to_sym
-
-              define_method(ssl)   { |*args| send(helper, *ssl_alter(args, WITH_SSL))    }
-              define_method(plain) { |*args| send(helper, *ssl_alter(args, WITHOUT_SSL)) }
-
-              protected ssl, plain
-            end
-
-            private
-              def ssl_alter(args, with) #:nodoc:
-                return args if Rails.env.development?
-
-                options = args.last.kind_of?(Hash) ? args.pop : {}
-                args.push(options.update(with))
-              end
-            end
-        end
+        create_ssl_helper_for(controller)
 
         # Include the helper_module into each class to patch.
         #
-        classes_to_patch.each {|k| k.module_eval { include helper_module } }
+        classes_to_patch.each {|k| k.module_eval { include SSLRouteHelpers } }
 
         # Set the helpers as public in the AC::Integration::Session class
         # for easy testing in the console.
         #
         ActionController::Integration::Session.module_eval do
-          public *route_helpers.map {|helper| "ssl_#{helper}" }
-          public *route_helpers.map {|helper| "plain_#{helper}" }
+          public *SSLRouteHelpers.instance_methods
         end
+      end
+
+      # Populates the SSLRouteHelpers module with ssl_ and plain_ helper
+      # counterparts for all defined named route helpers.
+      #
+      # Tries to use the ActionController::Routing::Routes private Rails
+      # API, falls back to regexp filtering if it is not available.
+      #
+      def self.create_ssl_helper_for(controller)
+        return if SSLRouteHelpers.frozen?
+
+        route_helpers =
+          if defined? ActionController::Routing::Routes.named_routes.helpers
+            # This is a Private Rails API, so we check whether it's defined
+            # and reject all the hash_for_*() and the *_path() helpers.
+            #
+            ActionController::Routing::Routes.named_routes.helpers.
+              reject { |h| h.to_s =~ /(^hash_for)|(path$)/ }
+          else
+            # Warn the developer and fall back.
+            #
+            Rails.logger.warn "SSL: AC::Routing::Routes.named_routes disappeared"
+            Rails.logger.warn "SSL: falling back to filtering controller methods"
+
+            skip_regexp = /(^hash_for_|^formatted_|polymorphic_|^redirect_)/
+            controller.instance_methods.grep(/_url$/) -
+              controller.instance_methods.grep(skip_regexp)
+          end
+
+        # Create a Module containing all the ssl_ and plain_ helpers
+        # that: [1] alter the args they receive with the SSL options
+        # and [2] forward the altered args to the Rails' helper.
+        #
+        SSLRouteHelpers.module_eval do
+          route_helpers.each do |helper|
+            ssl, plain = "ssl_#{helper}", "plain_#{helper}"
+
+            define_method(ssl)   { |*args| send(helper, *ssl_alter(args, WITH_SSL))    }
+            define_method(plain) { |*args| send(helper, *ssl_alter(args, WITHOUT_SSL)) }
+
+            protected ssl, plain
+          end
+
+          private
+            def ssl_alter(args, with) #:nodoc:
+              return args if Rails.env.development?
+
+              options = args.last.kind_of?(Hash) ? args.pop : {}
+              args.push(options.update(with))
+            end
+        end
+
+        # No further modification allowed.
+        #
+        SSLRouteHelpers.freeze
       end
 
     end # REST
