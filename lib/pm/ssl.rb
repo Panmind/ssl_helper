@@ -152,7 +152,11 @@ module PM
 
     module TestHelpers
       def with_ssl
-        use_ssl; yield; forget_ssl
+        if @request.env['HTTPS'] == 'on'
+          yield
+        else
+          use_ssl; yield; forget_ssl
+        end
       end
 
       def use_ssl
