@@ -151,11 +151,17 @@ module PM
     end # Filters
 
     module TestHelpers
-      def with_ssl
-        if @request.env['HTTPS'] == 'on'
-          yield
-        else
-          use_ssl; yield; forget_ssl
+      def with_ssl(&block)
+        save_ssl_and do
+          use_ssl
+          block.call
+        end
+      end
+
+      def without_ssl(&block)
+        save_ssl_and do
+          forget_ssl
+          block.call
         end
       end
 
@@ -168,6 +174,13 @@ module PM
         @request.env['HTTPS']       = nil
         @request.env['SERVER_PORT'] = 80
       end
+
+      protected
+        def save_ssl_and
+          https, port = @request.env.values_at(*%w(HTTPS SERVER_PORT))
+          yield
+          @request.env.update('HTTPS' => https, 'SERVER_PORT' => port)
+        end
     end # TestHelpers
   end # SSL
 end # PM
