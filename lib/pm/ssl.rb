@@ -1,20 +1,13 @@
-# This module gets populated at runtime with all the route helpers.
-# It is here, outside the PM module, because it musn't be unloaded
-# or huge memory leaks (~3MB/reload) will occur.
-#
-module SSLRouteHelpers; end
-
 module PM
   module SSL
-
     WITH_SSL    = {:protocol => 'https'}
-    WITHOUT_SSL = {:protocol => 'http'}
+    WITHOUT_SSL = {:protocol => 'http' }
 
-    unless Rails.env.test? # Because tests make assumptions we cannot break
-      https_port = APPLICATION_CONFIG[:https_port].to_i
-      http_port  = APPLICATION_CONFIG[:http_port].to_i
-      https_port = 443 if https_port.zero?
-      http_port  = 80  if http_port.zero?
+    def self.set(options = {})
+      return if Rails.env.test? # Because tests make assumptions we cannot break
+
+      https_port = (options[:https_port] || 443).to_i
+      http_port  = (options[:http_port]  || 80 ).to_i
 
       # if we use non-standard ports we must explictly use them in the URIs
       if https_port != 443 || http_port != 80
@@ -23,44 +16,40 @@ module PM
       end
     end
 
-    [WITH_SSL, WITHOUT_SSL].each(&:freeze) # Better safe than sorry
+    module Routing
+      def reload!
+        returning super do
+          helpers = create_ssl_helpers
+          classes = [
+            ActionController::Base,
+            ActionController::Integration::Session,
+            ActionController::TestCase,
 
-    module REST
-      def self.included(controller)
-        # puts "Patching #{controller} with SSL support"
+            ActionView::Base
+          ]
 
-        unless controller <= ActionController::Base
-          raise ArgumentError, "The PM::SSL::REST module can be included ONLY into an ActionController::Base child!"
-        end
+          # Include the helper_module into each class to patch.
+          #
+          classes.each {|k| k.instance_eval { include helpers } }
 
-        classes_to_patch = [controller,
-          ApplicationHelper,
-          ActionController::Integration::Session,
-          ActionController::TestCase
-        ]
-
-        create_ssl_helper_for(controller)
-
-        # Include the helper_module into each class to patch.
-        #
-        classes_to_patch.each {|k| k.module_eval { include SSLRouteHelpers } }
-
-        # Set the helpers as public in the AC::Integration::Session class
-        # for easy testing in the console.
-        #
-        ActionController::Integration::Session.module_eval do
-          public *SSLRouteHelpers.instance_methods
+          # Set the helpers as public in the AC::Integration::Session class
+          # for easy testing in the console.
+          #
+          ActionController::Integration::Session.module_eval do
+            public *helpers.instance_methods
+          end
         end
       end
 
-      # Populates the SSLRouteHelpers module with ssl_ and plain_ helper
+      # Populates the @ssl_helpers module with ssl_ and plain_ helper
       # counterparts for all defined named route helpers.
       #
       # Tries to use the ActionController::Routing::Routes private Rails
       # API, falls back to regexp filtering if it is not available.
       #
-      def self.create_ssl_helper_for(controller)
-        return if SSLRouteHelpers.frozen?
+      def create_ssl_helpers
+        @ssl_helpers ||= Module.new
+        return @ssl_helpers if @ssl_helpers.frozen?
 
         route_helpers =
           if defined? ActionController::Routing::Routes.named_routes.helpers
@@ -75,16 +64,16 @@ module PM
             Rails.logger.warn "SSL: AC::Routing::Routes.named_routes disappeared"
             Rails.logger.warn "SSL: falling back to filtering controller methods"
 
-            skip_regexp = /(^hash_for_|^formatted_|polymorphic_|^redirect_)/
-            controller.instance_methods.grep(/_url$/) -
-              controller.instance_methods.grep(skip_regexp)
+            ac   = ActionController::Base
+            skip = /(^hash_for_|^formatted_|polymorphic_|^redirect_)/
+            ac.instance_methods.grep(/_url$/) - ac.instance_methods.grep(skip)
           end
 
         # Create a Module containing all the ssl_ and plain_ helpers
         # that: [1] alter the args they receive with the SSL options
         # and [2] forward the altered args to the Rails' helper.
         #
-        SSLRouteHelpers.module_eval do
+        @ssl_helpers.module_eval do
           route_helpers.each do |helper|
             ssl, plain = "ssl_#{helper}", "plain_#{helper}"
 
@@ -105,38 +94,36 @@ module PM
 
         # No further modification allowed.
         #
-        SSLRouteHelpers.freeze
+        @ssl_helpers.freeze
       end
 
     end # REST
 
     module Filters
-      def self.included(controller)
-        unless controller <= ApplicationController
-          raise "Invalid inclusion of #{self.inspect} into #{controller.inspect}"
+      def self.included(base)
+        base.extend(ClassMethods)
+      end
+
+      module ClassMethods
+        def require_ssl(options = {})
+          return if Rails.env.development?
+
+          skip_before_filter :ssl_refused,  options
+          before_filter      :ssl_required, options
         end
 
-        controller.instance_eval do
-          def require_ssl(options = {})
-            return if Rails.env.development?
+        def ignore_ssl(options = {})
+          return if Rails.env.development?
 
-            skip_before_filter :ssl_refused,  options
-            before_filter      :ssl_required, options
-          end
+          skip_before_filter :ssl_required, options
+          skip_before_filter :ssl_refused,  options
+        end
 
-          def ignore_ssl(options = {})
-            return if Rails.env.development?
+        def refuse_ssl(options = {})
+          return if Rails.env.development?
 
-            skip_before_filter :ssl_required, options
-            skip_before_filter :ssl_refused,  options
-          end
-
-          def refuse_ssl(options = {})
-            return if Rails.env.development?
-
-            skip_before_filter :ssl_required, options
-            before_filter      :ssl_refused,  options
-          end
+          skip_before_filter :ssl_required, options
+          before_filter      :ssl_refused,  options
         end
       end
 
@@ -184,3 +171,7 @@ module PM
     end # TestHelpers
   end # SSL
 end # PM
+
+ActionController::Routing::Routes.extend(PM::SSL::Routing)
+ActionController::Base.instance_eval { include PM::SSL::Filters }
+ActiveSupport::TestCase.instance_eval { include PM::SSL::TestHelpers } if Rails.env.test?
