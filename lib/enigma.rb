@@ -20,6 +20,8 @@ module Panmind
       def reload!
         returning super do
           helpers = create_ssl_helpers
+          return unless helpers # Not ready yet.
+
           classes = [
             ActionController::Base,
             ActionController::Integration::Session,
@@ -68,6 +70,8 @@ module Panmind
             skip = /(^hash_for_|^formatted_|polymorphic_|^redirect_)/
             ac.instance_methods.grep(/_url$/) - ac.instance_methods.grep(skip)
           end
+
+        return if route_helpers.empty?
 
         # Create a Module containing all the ssl_ and plain_ helpers
         # that: [1] alter the args they receive with the SSL options
