@@ -10,7 +10,7 @@ module PM
     WITH_SSL    = {:protocol => 'https'}
     WITHOUT_SSL = {:protocol => 'http'}
 
-    unless Rails.env.test? # Because tests make assumptions we cannot break
+    unless Rails.env.test?  || Rails.env == 'cucumber'# Because tests make assumptions we cannot break
       https_port = APPLICATION_CONFIG[:https_port].to_i
       http_port  = APPLICATION_CONFIG[:http_port].to_i
       https_port = 443 if https_port.zero?
