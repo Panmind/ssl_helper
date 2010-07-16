@@ -49,6 +49,11 @@ module PM
             skip_before_filter :ssl_refused,  options
             before_filter      :ssl_required, options
           end
+
+          def ignore_ssl(options = {})
+            return if Rails.env.development?
+            skip_before_filter :ssl_required, options
+          end
         
           def refuse_ssl(options = {})
             return if Rails.env.development?
