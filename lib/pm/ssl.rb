@@ -19,29 +19,61 @@ module PM
     [WITH_SSL, WITHOUT_SSL].each(&:freeze) # Better safe than sorry
 
     module REST
-      # URIs generation
-      # XXX OPTIMIZE and screw this method_missing stuff, that could
-      # become utterly dangerous.
-      #
-      def method_missing(meth, *args, &block)
-        if meth.to_s.starts_with?('ssl_')
-          send(meth.to_s.sub('ssl_', ''), *ssl_alter(args, WITH_SSL))
+      def self.included(controller)
+        # puts "Patching #{controller} with SSL support"
 
-        elsif meth.to_s.starts_with?('plain_')
-          send(meth.to_s.sub('plain_', ''), *ssl_alter(args, WITHOUT_SSL))
+        unless controller <= ActionController::Base
+          raise ArgumentError, "The PM::SSL::REST module can be included ONLY into an ActionController::Base child!"
+        end
 
-        else
-          super meth, *args, &block
+        classes_to_patch = [controller, ApplicationHelper,
+          ActionController::Integration::Session, ActionController::TestCase,
+        ]
+
+        # Ask ActionController for all the named_routes helper names
+        # TODO: This is a private API, so it may change. Please take
+        # care with Rails upgrades. Maybe a heavier (but safer) call
+        # such as controller.methods.grep/(_path|url)$/ would do the
+        # job better.
+        #
+        route_helpers = ActionController::Routing::Routes.named_routes.helpers
+
+        # Create a Module containing all the ssl_ and plain_ helpers
+        # that: [1] alter the args they receive with the SSL options
+        # and [2] forward the altered args to the Rails' helper.
+        #
+        helper_module = returning(Module.new) do |mod|
+          mod.module_eval do
+            route_helpers.each do |helper|
+              ssl, plain = "ssl_#{helper}".to_sym, "plain_#{helper}".to_sym
+
+              define_method(ssl)   { |*args| send(helper, *ssl_alter(args, WITH_SSL))    }
+              define_method(plain) { |*args| send(helper, *ssl_alter(args, WITHOUT_SSL)) }
+            end
+
+            private
+              def ssl_alter(args, with) #:nodoc:
+                return args if Rails.env.development?
+
+                options = args.last.kind_of?(Hash) ? args.pop : {}
+                args.push(options.update(with))
+              end
+            end
+        end
+
+        # Include the helper_module into each class to patch.
+        #
+        classes_to_patch.each {|k| k.module_eval { include helper_module } }
+
+        # Into the ApplicationHelper the named route helpers are all
+        # protected: set the ssl_ and plain_ counterparts protected
+        # as well.
+        ApplicationHelper.module_eval do
+          protected *route_helpers.map {|h| "ssl_#{h}".to_sym }
+          protected *route_helpers.map {|h| "plain_#{h}".to_sym }
         end
       end
 
-      private
-        def ssl_alter(args, with)
-          return args if Rails.env.development?
-
-          options = args.last.kind_of?(Hash) ? args.pop : {}
-          args.push(options.update(with))
-        end
     end # REST
 
     module Filters
@@ -64,7 +96,7 @@ module PM
             skip_before_filter :ssl_required, options
             skip_before_filter :ssl_refused,  options
           end
-        
+
           def refuse_ssl(options = {})
             return if Rails.env.development?
 
@@ -78,7 +110,7 @@ module PM
         def ssl_required
           redirect_to WITH_SSL.dup unless request.ssl?
         end
-      
+
         def ssl_refused
           redirect_to WITHOUT_SSL.dup if request.ssl?
         end
@@ -101,11 +133,3 @@ module PM
     end # TestHelpers
   end # SSL
 end # PM
-
-class ActionController::Integration::Session # For integration tests and console `app`
-  include PM::SSL::REST
-end
-
-class ActionController::TestCase # For functional tests
-  include PM::SSL::REST
-end
