@@ -1,5 +1,5 @@
-module PM
-  module SSL
+module Panmind
+  module Enigma
     WITH_SSL    = {:protocol => 'https'}
     WITHOUT_SSL = {:protocol => 'http' }
 
@@ -61,8 +61,8 @@ module PM
           else
             # Warn the developer and fall back.
             #
-            Rails.logger.warn "SSL: AC::Routing::Routes.named_routes disappeared"
-            Rails.logger.warn "SSL: falling back to filtering controller methods"
+            Rails.logger.warn "Enigma: AC::Routing::Routes.named_routes disappeared"
+            Rails.logger.warn "Enigma: falling back to filtering controller methods"
 
             ac   = ActionController::Base
             skip = /(^hash_for_|^formatted_|polymorphic_|^redirect_)/
@@ -169,9 +169,5 @@ module PM
           @request.env.update('HTTPS' => https, 'SERVER_PORT' => port)
         end
     end # TestHelpers
-  end # SSL
-end # PM
-
-ActionController::Routing::Routes.extend(PM::SSL::Routing)
-ActionController::Base.instance_eval { include PM::SSL::Filters }
-ActiveSupport::TestCase.instance_eval { include PM::SSL::TestHelpers } if Rails.env.test?
+  end # Enigma
+end # Panmind
