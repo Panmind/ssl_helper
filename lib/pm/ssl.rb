@@ -1,21 +1,20 @@
 module PM
   module SSL
-    if Rails.env.test?
-      HTTPS_PORT = HTTP_PORT = HOSTNAME = nil
-    else
-      HTTPS_PORT = APPLICATION_CONFIG[:https_port]
-      HTTP_PORT  = APPLICATION_CONFIG[:http_port]
-      HOSTNAME   = APPLICATION_CONFIG[:hostname] or
-                     raise "Missing 'hostname' in settings.yml!"
+    WITH_SSL    = {:protocol => 'https'}
+    WITHOUT_SSL = {:protocol => 'http'}
+
+    unless Rails.env.test? # Because tests make assumptions we cannot break
+      WITH_SSL.update(:port => APPLICATION_CONFIG[:https_port] || 443)
+      WITHOUT_SSL.update(:port => APPLICATION_CONFIG[:http_port]  || 80)
     end
 
-    WITH_SSL    = {:protocol => 'https', :host => HOSTNAME}
-    WITH_SSL.merge(:port => HTTPS_PORT) if HTTPS_PORT
-
-    WITHOUT_SSL = {:protocol => 'http',  :host => HOSTNAME}
-    WITHOUT_SSL.merge(:port => HTTP_PORT) if HTTP_PORT
+    [WITH_SSL, WITHOUT_SSL].each(&:freeze) # Better safe than sorry
 
     module REST
+      # URIs generation
+      # XXX OPTIMIZE and screw this method_missing stuff, that could
+      # become utterly dangerous.
+      #
       def method_missing(meth, *args, &block)
         if meth.to_s.starts_with?('ssl_')
           send(meth.to_s.sub('ssl_', ''), *ssl_alter(args, WITH_SSL))
@@ -45,11 +44,15 @@ module PM
 
         controller.instance_eval do
           def require_ssl(options = {})
+            return if Rails.env.development?
+
             skip_before_filter :ssl_refused,  options
             before_filter      :ssl_required, options
           end
         
           def refuse_ssl(options = {})
+            return if Rails.env.development?
+
             skip_before_filter :ssl_required, options
             before_filter      :ssl_refused,  options
           end
@@ -58,11 +61,11 @@ module PM
 
       protected
         def ssl_required
-          redirect_to WITH_SSL unless request.ssl?
+          redirect_to WITH_SSL.dup unless request.ssl?
         end
       
         def ssl_refused
-          redirect_to WITHOUT_SSL if request.ssl?
+          redirect_to WITHOUT_SSL.dup if request.ssl?
         end
     end # Filters
 
