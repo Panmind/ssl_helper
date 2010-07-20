@@ -1,10 +1,17 @@
-Enigma: an SSL plugin for Rails
-===============================
+SSLHelper: an SSL plugin for Rails
+==================================
+
+Purpose
+-------
+
+This plugin implements the same features as Rails' ssl_requirement plugin,
+plus builds on existing named route helpers by adding `plain_` and `ssl_`
+counterparts.
 
 Installation
 ------------
 
-    script/plugin install git://github.com/Panmind/enigma.git
+    script/plugin install git://github.com/Panmind/ssl_helper.git
 
 Gems will follow soon, hopefully after the July 22nd Ruby Social Club in Milan.
 
@@ -12,18 +19,44 @@ Usage
 -----
 
 After you get the plugin loaded, you'll have `plain_` and `ssl_` counterparts
-to all your named route helpers, e.g.: `ssl_root_url` or `plain_user_url(user)`.
+to all your named route helpers, e.g.: `ssl_root_url` or `plain_user_url(user)`
 
-Moreover, in your tests, you'll be able to write:
+You can use them in your views, controllers and functional tests, as they were
+built in into the framework.
+
+Views:
+
+    <%= link_to 'login', ssl_login_url %>
+    <%= link_to 'home', plain_root_url %>
+
+Controllers:
+
+    def foo
+      redirect_to ssl_foos_url
+    end
+
+Functionals:
 
     context "an admin" do
       should "access admin area only via SSL" do
-        with_ssl do
+        setup { login_as @admin }
+
+        without_ssl do
           get :index
           assert_redirected_to ssl_admin_url
         end
+
+        with_ssl do
+          get :index
+          assert_response :success
+        end
       end
     end
+
+The additional `with_ssl`, `without_ssl`, `use_ssl` and `forget_ssl` are
+available in your tests. The first two ones accept blocks evaluated with
+SSL set or unset, the others set/unset SSL for a number of consecutive
+tests (e.g. use them in your `setup` method).
 
 
 Server configuration
