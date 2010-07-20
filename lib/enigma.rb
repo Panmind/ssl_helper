@@ -1,5 +1,5 @@
 module Panmind
-  module Enigma
+  module SSLHelper
     WITH_SSL    = {:protocol => 'https'}
     WITHOUT_SSL = {:protocol => 'http' }
 
@@ -63,8 +63,8 @@ module Panmind
           else
             # Warn the developer and fall back.
             #
-            Rails.logger.warn "Enigma: AC::Routing::Routes.named_routes disappeared"
-            Rails.logger.warn "Enigma: falling back to filtering controller methods"
+            Rails.logger.warn "SSLHelper: AC::Routing::Routes.named_routes disappeared"
+            Rails.logger.warn "SSLHelper: falling back to filtering controller methods"
 
             ac   = ActionController::Base
             skip = /(^hash_for_|^formatted_|polymorphic_|^redirect_)/
@@ -173,5 +173,5 @@ module Panmind
           @request.env.update('HTTPS' => https, 'SERVER_PORT' => port)
         end
     end # TestHelpers
-  end # Enigma
+  end # SSLHelper
 end # Panmind
