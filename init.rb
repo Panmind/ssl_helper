@@ -1,4 +1,4 @@
-require 'enigma'
+require 'panmind/ssl_helper'
 
 module Panmind::SSLHelper
   ActionController::Routing::Routes.extend(Routing)
