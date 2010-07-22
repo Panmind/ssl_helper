@@ -59,6 +59,12 @@ SSL set or unset, the others set/unset SSL for a number of consecutive
 tests (e.g. use them in your `setup` method).
 
 
+Compatibility
+-------------
+
+Tested with Rails 2.3.8 running under Ruby 1.9.1-p378.
+
+
 Server configuration
 --------------------
 
