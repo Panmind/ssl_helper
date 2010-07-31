@@ -11,9 +11,13 @@ counterparts.
 Installation
 ------------
 
-    script/plugin install git://github.com/Panmind/ssl_helper.git
+Via RubyGems:
 
-Gems will follow soon, hopefully after the July 22nd Ruby Social Club in Milan.
+    gem install panmind-sslhelper
+
+Or via Rails Plugin:
+
+    script/plugin install git://github.com/Panmind/ssl_helper.git
 
 Usage
 -----
