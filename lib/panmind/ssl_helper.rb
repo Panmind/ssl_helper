@@ -1,8 +1,6 @@
-require 'panmind/ssl_helper/railtie'
-
 module Panmind
   module SSLHelper
-    Version     = '0.8.0'
+    Version     = '0.8.1'
 
     WITH_SSL    = {:protocol => 'https'}
     WITHOUT_SSL = {:protocol => 'http' }
