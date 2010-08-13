@@ -1,6 +1,6 @@
 module Panmind
   module SSLHelper
-    Version     = '0.8.1'
+    Version     = '0.8.2'
 
     WITH_SSL    = {:protocol => 'https'}
     WITHOUT_SSL = {:protocol => 'http' }
@@ -103,7 +103,7 @@ module Panmind
         @ssl_helpers.freeze
       end
 
-    end # REST
+    end # Routing
 
     module Filters
       def self.included(base)
