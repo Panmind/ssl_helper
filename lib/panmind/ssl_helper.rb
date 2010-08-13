@@ -135,11 +135,11 @@ module Panmind
 
       protected
         def ssl_required
-          redirect_to WITH_SSL.dup unless request.ssl?
+          redirect_to params.merge(WITH_SSL) unless request.ssl?
         end
 
         def ssl_refused
-          redirect_to WITHOUT_SSL.dup if request.ssl?
+          redirect_to params.merge(WITHOUT_SSL) if request.ssl?
         end
     end # Filters
 
