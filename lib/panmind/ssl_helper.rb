@@ -27,21 +27,23 @@ module Panmind
         end
       end
 
+      Classes = [
+        ActionController::Base,
+        ActionController::Integration::Session,
+        ActionController::TestCase,
+
+        ActionView::Base
+      ]
+
       def finalize_with_ssl!
         helpers = create_ssl_helpers
         return unless helpers # Not ready yet.
 
-        classes = [
-          ActionController::Base,
-          ActionController::Integration::Session,
-          ActionController::TestCase,
-
-          ActionView::Base
-        ]
+        return if Classes.first.included_modules.include? helpers
 
         # Include the helper_module into each class to patch.
         #
-        classes.each {|k| k.instance_eval { include helpers } }
+        Classes.each {|k| k.instance_eval { include helpers } }
 
         # Set the helpers as public in the AC::Integration::Session class
         # for easy testing in the console.
@@ -49,6 +51,8 @@ module Panmind
         ActionController::Integration::Session.module_eval do
           public *helpers.instance_methods
         end
+
+      ensure
         finalize_without_ssl!
       end
 
