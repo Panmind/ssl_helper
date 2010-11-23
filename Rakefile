@@ -23,7 +23,7 @@ begin
     gemspec.has_rdoc         = true
 
     gemspec.version          = Panmind::SSLHelper::Version
-    gemspec.date             = '2010-07-31'
+    gemspec.date             = '2010-11-23'
 
     gemspec.require_path     = 'lib'
 
