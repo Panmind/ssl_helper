@@ -1,4 +1,4 @@
-require 'panmind/ssl_helper/railtie'
+require 'panmind/ssl_helper/railtie' if defined? Rails
 
 module Panmind
   module SSLHelper
@@ -33,7 +33,7 @@ module Panmind
         ActionController::TestCase,
 
         ActionView::Base
-      ]
+      ] if defined? Rails
 
       def finalize_with_ssl!
         helpers = create_ssl_helpers
