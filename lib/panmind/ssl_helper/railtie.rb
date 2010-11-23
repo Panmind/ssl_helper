@@ -15,7 +15,7 @@ module Panmind
 
     class Railtie
       def self.insert
-        ActionController::Routing::Routes.extend(Panmind::SSLHelper::Routing)
+        ActionController::Routing::RouteSet.instance_eval { include Panmind::SSLHelper::Routing }
         ActionController::Base.instance_eval { include Panmind::SSLHelper::Filters }
         ActiveSupport::TestCase.instance_eval { include Panmind::SSLHelper::TestHelpers } if Rails.env.test?
       end

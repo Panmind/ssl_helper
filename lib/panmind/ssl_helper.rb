@@ -21,30 +21,35 @@ module Panmind
     end
 
     module Routing
-      def reload!
-        returning super do
-          helpers = create_ssl_helpers
-          return unless helpers # Not ready yet.
-
-          classes = [
-            ActionController::Base,
-            ActionController::Integration::Session,
-            ActionController::TestCase,
-
-            ActionView::Base
-          ]
-
-          # Include the helper_module into each class to patch.
-          #
-          classes.each {|k| k.instance_eval { include helpers } }
-
-          # Set the helpers as public in the AC::Integration::Session class
-          # for easy testing in the console.
-          #
-          ActionController::Integration::Session.module_eval do
-            public *helpers.instance_methods
-          end
+      def self.included(base)
+        base.instance_eval do
+          alias_method_chain :finalize!, :ssl
         end
+      end
+
+      def finalize_with_ssl!
+        helpers = create_ssl_helpers
+        return unless helpers # Not ready yet.
+
+        classes = [
+          ActionController::Base,
+          ActionController::Integration::Session,
+          ActionController::TestCase,
+
+          ActionView::Base
+        ]
+
+        # Include the helper_module into each class to patch.
+        #
+        classes.each {|k| k.instance_eval { include helpers } }
+
+        # Set the helpers as public in the AC::Integration::Session class
+        # for easy testing in the console.
+        #
+        ActionController::Integration::Session.module_eval do
+          public *helpers.instance_methods
+        end
+        finalize_without_ssl!
       end
 
       # Populates the @ssl_helpers module with ssl_ and plain_ helper
