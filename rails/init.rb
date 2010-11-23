@@ -1,2 +1,2 @@
-require 'panmind/ssl_helper/railtie'
+require 'panmind/ssl_helper'
 Panmind::SSLHelper::Railtie.insert

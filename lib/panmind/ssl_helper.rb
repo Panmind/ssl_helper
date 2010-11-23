@@ -1,3 +1,5 @@
+require 'panmind/ssl_helper/railtie'
+
 module Panmind
   module SSLHelper
     Version     = '0.8.2'

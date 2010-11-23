@@ -3,6 +3,16 @@ require 'panmind/ssl_helper'
 module Panmind
   module SSLHelper
 
+    if defined? Rails::Railtie
+      class Railtie < Rails::Railtie
+        initializer 'panmind.ssl_helper.insert_into_action_controller' do
+          ActiveSupport.on_load :action_controller do
+            Panmind::SSLHelper::Railtie.insert
+          end
+        end
+      end
+    end
+
     class Railtie
       def self.insert
         ActionController::Routing::Routes.extend(Panmind::SSLHelper::Routing)
