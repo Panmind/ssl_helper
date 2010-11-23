@@ -1,5 +1,5 @@
-SSLHelper: an SSL plugin for Rails
-==================================
+SSLHelper: an SSL plugin for Rails 3
+====================================
 
 Purpose
 -------
@@ -17,7 +17,7 @@ Via RubyGems:
 
 Or via Rails Plugin:
 
-    script/plugin install git://github.com/Panmind/ssl_helper.git
+    rails plugin install git://github.com/Panmind/ssl_helper.git
 
 Usage
 -----
@@ -66,7 +66,7 @@ tests (e.g. use them in your `setup` method).
 Compatibility
 -------------
 
-Tested with Rails 2.3.8 running under Ruby 1.9.1-p378.
+Tested with Rails 3.0.3 running under Ruby 1.9.2p0
 
 
 Server configuration
@@ -97,4 +97,4 @@ config file, such as:
       }
     }
 
-For Apache, you're on your own for now :-) more documentation will follow!
+For Apache, you're on your own :-) or you can contribute documentation. Thanks!
