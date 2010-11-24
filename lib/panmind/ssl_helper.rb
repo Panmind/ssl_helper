@@ -2,7 +2,7 @@ require 'panmind/ssl_helper/railtie' if defined? Rails
 
 module Panmind
   module SSLHelper
-    Version     = '0.9'
+    Version     = '0.9.1'
 
     WITH_SSL    = {:protocol => 'https'}
     WITHOUT_SSL = {:protocol => 'http' }

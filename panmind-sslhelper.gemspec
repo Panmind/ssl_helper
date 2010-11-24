@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{panmind-sslhelper}
-  s.version = "0.9"
+  s.version = "0.9.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Marcello Barnaba"]
-  s.date = %q{2010-11-23}
+  s.date = %q{2010-11-24}
   s.description = %q{SSLHelper provides controller helpers to require/refuse SSL onto specific actions, test helpers to verify controller behaviours and named route counterparts (e.g. ssl_login_url) to clean up your view and controller code. HTTP(S) ports are configurable.}
   s.email = %q{vjt@openssl.it}
   s.extra_rdoc_files = [
