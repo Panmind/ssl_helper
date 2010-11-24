@@ -67,16 +67,16 @@ module Panmind
         return @ssl_helpers if @ssl_helpers.frozen?
 
         route_helpers =
-          if defined? ActionController::Routing::Routes.named_routes.helpers
+          if defined? Rails.application.routes.named_routes.helpers
             # This is a Private Rails API, so we check whether it's defined
             # and reject all the hash_for_*() and the *_path() helpers.
             #
-            ActionController::Routing::Routes.named_routes.helpers.
-              reject { |h| h.to_s =~ /(^hash_for)|(path$)/ }
+            Rails.application.routes.named_routes.helpers.
+              reject { |h| h =~ /^hash_for|path$/ }
           else
             # Warn the developer and fall back.
             #
-            Rails.logger.warn "SSLHelper: AC::Routing::Routes.named_routes disappeared"
+            Rails.logger.warn "SSLHelper: Rails.application.routes.named_routes.helpers disappeared"
             Rails.logger.warn "SSLHelper: falling back to filtering controller methods"
 
             ac   = ActionController::Base
