@@ -74,8 +74,11 @@ Server configuration
 
 The plugin relies on the HTTPS server variable, that is set automatically by
 Rails if the `X-Forwarded-Proto` header is set to `https`. To avoid clients
-setting that header, take care to add a `proxy_set_header` in your nginx
-config file, such as:
+setting that header, take care to add the corresponding configuration for your web server.
+
+Nginx
+=====
+Set `proxy_set_header` in your nginx config file, such as:
 
     server {
       listen 80;
@@ -97,4 +100,24 @@ config file, such as:
       }
     }
 
-For Apache, you're on your own :-) or you can contribute documentation. Thanks!
+
+Apache
+=====
+Set RequestHeader in your apache sites, such as:
+
+    <VirtualHost *:80>
+    
+        ...
+    
+        RequestHeader set X_FORWARDED_PROTO 'http'
+    </VirtualHost>
+
+    
+    <IfModule mod_ssl.c>
+    <VirtualHost *:443>
+    
+        ...
+    
+    	RequestHeader set X_FORWARDED_PROTO 'https'
+    </VirtualHost>
+    </IfModule>
