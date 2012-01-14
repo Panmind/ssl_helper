@@ -148,16 +148,26 @@ module Panmind
         def ssl_required
           unless request.ssl?
             Rails.logger.info("SSL Helper: redirecting to SSL url")
-            redirect_to params.merge(WITH_SSL) 
+            redirect_to sanitized_params.merge(WITH_SSL)
           end
         end
 
         def ssl_refused
           if request.ssl?
             Rails.logger.info("SSL Helper: redirecting to non-SSL url")
-            redirect_to params.merge(WITHOUT_SSL) 
+            redirect_to sanitized_params.merge(WITHOUT_SSL)
           end
         end
+
+      private
+        def sanitized_params
+          unless request.get?
+            params.select {|k,v| request.query_parameters.keys.include?(k) }
+          else
+            params
+          end
+        end
+
     end # Filters
 
     module TestHelpers
