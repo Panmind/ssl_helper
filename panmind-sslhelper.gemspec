@@ -8,10 +8,10 @@ Gem::Specification.new do |s|
   s.version = "0.9.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Marcello Barnaba"]
-  s.date = %q{2010-11-24}
+  s.authors = ["Marcello Barnaba", "Fabrizio Regini"]
+  s.date = %q{2011-01-24}
   s.description = %q{SSLHelper provides controller helpers to require/refuse SSL onto specific actions, test helpers to verify controller behaviours and named route counterparts (e.g. ssl_login_url) to clean up your view and controller code. HTTP(S) ports are configurable.}
-  s.email = %q{vjt@openssl.it}
+  s.email = ["vjt@openssl.it", "freegenie@gmail.com"]
   s.extra_rdoc_files = [
     "README.md"
   ]
@@ -24,11 +24,10 @@ Gem::Specification.new do |s|
   ]
   s.homepage = %q{http://github.com/Panmind/ssl_helper}
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.7}
+  s.rubygems_version = %q{1.6.2}
   s.summary = %q{SSL requirement filters and SSL-aware named route helpers for Rails apps}
 
   if s.respond_to? :specification_version then
-    current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then

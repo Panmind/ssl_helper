@@ -14,8 +14,8 @@ begin
                                'and named route counterparts (e.g. ssl_login_url) to clean up your '\
                                'view and controller code. HTTP(S) ports are configurable.'
 
-    gemspec.authors          = ['Marcello Barnaba']
-    gemspec.email            = 'vjt@openssl.it'
+    gemspec.authors          = ['Marcello Barnaba', 'Fabrizio Regini']
+    gemspec.email            = ['vjt@openssl.it', 'freegenie@gmail.com']
     gemspec.homepage         = 'http://github.com/Panmind/ssl_helper'
 
     gemspec.files            = %w( README.md Rakefile rails/init.rb ) + Dir['lib/**/*']
@@ -23,7 +23,7 @@ begin
     gemspec.has_rdoc         = true
 
     gemspec.version          = Panmind::SSLHelper::Version
-    gemspec.date             = '2010-11-23'
+    gemspec.date             = '2011-01-24'
 
     gemspec.require_path     = 'lib'
 
