@@ -147,15 +147,17 @@ module Panmind
       protected
         def ssl_required
           unless request.ssl?
+            raise SSLHelper::SSLRequired unless request.get?
             Rails.logger.info("SSL Helper: redirecting to SSL url")
-            redirect_to params.merge(WITH_SSL) 
+            redirect_to params.merge(WITH_SSL)
           end
         end
 
         def ssl_refused
           if request.ssl?
+            raise SSLHelper::SSLRefused unless request.get?
             Rails.logger.info("SSL Helper: redirecting to non-SSL url")
-            redirect_to params.merge(WITHOUT_SSL) 
+            redirect_to params.merge(WITHOUT_SSL)
           end
         end
     end # Filters
@@ -192,5 +194,9 @@ module Panmind
           @request.env.update('HTTPS' => https, 'SERVER_PORT' => port)
         end
     end # TestHelpers
+
+    class SSLRequired < StandardError ; end
+    class SSLRefused <  StandardError ; end
+
   end # SSLHelper
 end # Panmind
