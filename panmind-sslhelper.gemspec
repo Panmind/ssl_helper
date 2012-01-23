@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Marcello Barnaba", "Fabrizio Regini"]
-  s.date = %q{2011-01-24}
+  s.date = %q{2012-02-12}
   s.description = %q{SSLHelper provides controller helpers to require/refuse SSL onto specific actions, test helpers to verify controller behaviours and named route counterparts (e.g. ssl_login_url) to clean up your view and controller code. HTTP(S) ports are configurable.}
   s.email = ["vjt@openssl.it", "freegenie@gmail.com"]
   s.extra_rdoc_files = [

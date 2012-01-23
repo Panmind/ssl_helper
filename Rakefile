@@ -1,5 +1,5 @@
 require 'rake'
-require 'rake/rdoctask'
+require 'rdoc/task'
 
 require './lib/panmind/ssl_helper'
 
@@ -23,7 +23,7 @@ begin
     gemspec.has_rdoc         = true
 
     gemspec.version          = Panmind::SSLHelper::Version
-    gemspec.date             = '2011-01-24'
+    gemspec.date             = '2012-02-12'
 
     gemspec.require_path     = 'lib'
 
