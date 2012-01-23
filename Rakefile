@@ -1,7 +1,7 @@
 require 'rake'
 require 'rake/rdoctask'
 
-require 'lib/panmind/ssl_helper'
+require './lib/panmind/ssl_helper'
 
 begin
   require 'jeweler'
